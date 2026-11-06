@@ -392,6 +392,19 @@ def tiktok_privacy_verification():
     )
 
 # ==================================================
+# VERIFICATION TIKTOK - SITE PRINCIPAL
+# ==================================================
+
+@app.route("/tiktokyH9LiAt8ayvX33gxPY4g8LecU9RsDjDy.txt")
+def tiktok_main_verification():
+
+    return (
+        "tiktok-developers-site-verification=yH9LiAt8ayvX33gxPY4g8LecU9RsDjDy",
+        200,
+        {"Content-Type": "text/plain; charset=utf-8"}
+    )
+
+# ==================================================
 # ANCIENNE VERIFICATION TIKTOK
 # ==================================================
 
