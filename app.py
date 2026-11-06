@@ -4,7 +4,14 @@ import secrets
 import requests
 
 from urllib.parse import urlencode
-from flask import Flask, redirect, request, session, url_for, render_template_string
+from flask import (
+    Flask,
+    redirect,
+    request,
+    session,
+    url_for,
+    render_template_string
+)
 
 app = Flask(__name__)
 
@@ -32,6 +39,7 @@ USER_INFO_URL = "https://open.tiktokapis.com/v2/user/info/"
 
 @app.route("/")
 def home():
+
     if session.get("user"):
         return redirect(url_for("profile"))
 
@@ -42,6 +50,7 @@ def home():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>IZIIX - Connexion TikTok</title>
+
         <style>
             body {
                 background: #101010;
@@ -50,10 +59,12 @@ def home():
                 text-align: center;
                 padding: 80px 20px;
             }
+
             h1 {
                 color: #ff3030;
                 font-size: 48px;
             }
+
             a {
                 display: inline-block;
                 background: #ff3030;
@@ -65,6 +76,7 @@ def home():
             }
         </style>
     </head>
+
     <body>
         <h1>IZIIX</h1>
         <p>Connecte ton compte TikTok à IZIIX.</p>
@@ -79,6 +91,7 @@ def home():
 
 @app.route("/login")
 def login():
+
     if not CLIENT_KEY or not CLIENT_SECRET:
         return "Configuration TikTok manquante sur Render.", 500
 
@@ -96,13 +109,18 @@ def login():
     return redirect(AUTHORIZE_URL + "?" + urlencode(params))
 
 # ==================================================
-# RETOUR DE TIKTOK
+# RETOUR TIKTOK / CALLBACK
 # ==================================================
 
 @app.route("/callback")
 def callback():
+
     if request.args.get("error"):
-        return "Connexion TikTok refusée : " + request.args.get("error"), 400
+        return (
+            "Connexion TikTok refusée : "
+            + request.args.get("error"),
+            400
+        )
 
     code = request.args.get("code")
     state = request.args.get("state")
@@ -111,7 +129,7 @@ def callback():
         return "Code de connexion TikTok manquant.", 400
 
     if not state or state != session.get("oauth_state"):
-        return "Erreur de sécurité : état OAuth invalide.", 400
+        return "Erreur de sécurité OAuth.", 400
 
     session.pop("oauth_state", None)
 
@@ -133,10 +151,13 @@ def callback():
 
         token_data = token_response.json()
 
-        if token_response.status_code != 200 or "access_token" not in token_data:
-            return "Erreur TikTok lors de la connexion : " + str(token_data), 400
+        if token_response.status_code != 200:
+            return "Erreur TikTok : " + str(token_data), 400
 
-        access_token = token_data["access_token"]
+        access_token = token_data.get("access_token")
+
+        if not access_token:
+            return "Token TikTok introuvable.", 400
 
         user_response = requests.get(
             USER_INFO_URL,
@@ -152,7 +173,7 @@ def callback():
         user_data = user_response.json()
 
         if user_response.status_code != 200:
-            return "Erreur lors de la récupération du profil : " + str(user_data), 400
+            return "Erreur profil TikTok : " + str(user_data), 400
 
         user = user_data.get("data", {}).get("user")
 
@@ -170,12 +191,16 @@ def callback():
     except requests.RequestException:
         return "Impossible de contacter TikTok. Réessaie plus tard.", 500
 
+    except ValueError:
+        return "Réponse TikTok invalide.", 500
+
 # ==================================================
 # PROFIL UTILISATEUR
 # ==================================================
 
 @app.route("/profile")
 def profile():
+
     user = session.get("user")
 
     if not user:
@@ -188,6 +213,7 @@ def profile():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Profil IZIIX</title>
+
         <style>
             body {
                 background: #101010;
@@ -196,14 +222,17 @@ def profile():
                 text-align: center;
                 padding: 60px 20px;
             }
+
             h1 {
                 color: #ff3030;
             }
+
             img {
                 width: 110px;
                 height: 110px;
                 border-radius: 50%;
             }
+
             a {
                 color: white;
                 background: #ff3030;
@@ -215,6 +244,7 @@ def profile():
             }
         </style>
     </head>
+
     <body>
         <h1>IZIIX</h1>
 
@@ -236,6 +266,7 @@ def profile():
 
 @app.route("/logout")
 def logout():
+
     session.clear()
     return redirect(url_for("home"))
 
@@ -246,6 +277,7 @@ def logout():
 @app.route("/terms")
 @app.route("/terms/")
 def terms():
+
     return render_template_string("""
     <!DOCTYPE html>
     <html lang="fr">
@@ -254,28 +286,31 @@ def terms():
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Conditions d'utilisation - IZIIX</title>
     </head>
+
     <body style="font-family:Arial;max-width:850px;margin:40px auto;padding:20px;line-height:1.6">
+
         <h1>Conditions d'utilisation - IZIIX</h1>
         <p>Dernière mise à jour : novembre 2026</p>
 
         <h2>1. Présentation</h2>
-        <p>IZIIX est un service destiné à faciliter la connexion
-        entre les utilisateurs, TikTok et la communauté Discord IZIIX.</p>
+        <p>IZIIX est un service communautaire permettant aux utilisateurs
+        de connecter leur compte TikTok et de rejoindre la communauté IZIIX.</p>
 
         <h2>2. Utilisation du service</h2>
         <p>L'utilisateur s'engage à utiliser IZIIX de manière légale
-        et à ne pas perturber le fonctionnement du service.</p>
+        et à respecter les autres membres.</p>
 
         <h2>3. Connexion TikTok</h2>
         <p>La connexion TikTok permet de récupérer certaines informations
         de profil autorisées par TikTok et acceptées par l'utilisateur.</p>
 
-        <h2>4. Responsabilité</h2>
-        <p>IZIIX n'est pas responsable des interruptions ou
-        dysfonctionnements provenant de services tiers.</p>
+        <h2>4. Services tiers</h2>
+        <p>IZIIX utilise des services tiers. Leur disponibilité
+        et leur fonctionnement ne dépendent pas uniquement d'IZIIX.</p>
 
         <h2>5. Contact</h2>
-        <p>Contact : guillermnoa@gmail.com</p>
+        <p>Pour toute question : guillermnoa@gmail.com</p>
+
     </body>
     </html>
     """)
@@ -287,6 +322,7 @@ def terms():
 @app.route("/privacy")
 @app.route("/privacy/")
 def privacy():
+
     return render_template_string("""
     <!DOCTYPE html>
     <html lang="fr">
@@ -295,39 +331,47 @@ def privacy():
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Politique de confidentialité - IZIIX</title>
     </head>
+
     <body style="font-family:Arial;max-width:850px;margin:40px auto;padding:20px;line-height:1.6">
+
         <h1>Politique de confidentialité - IZIIX</h1>
         <p>Dernière mise à jour : novembre 2026</p>
 
         <h2>1. Informations collectées</h2>
-        <p>Lors de la connexion TikTok, IZIIX peut recevoir
-        les informations de profil autorisées par l'utilisateur,
-        notamment son identifiant, son nom et son avatar.</p>
+        <p>Lors de la connexion TikTok, IZIIX reçoit les informations
+        de profil autorisées, notamment l'identifiant TikTok,
+        le nom affiché et la photo de profil.</p>
 
         <h2>2. Utilisation des informations</h2>
-        <p>Ces informations servent à afficher le profil de
-        l'utilisateur sur le service IZIIX.</p>
+        <p>Ces informations servent à identifier l'utilisateur
+        et à afficher son profil sur IZIIX.</p>
 
         <h2>3. Conservation</h2>
-        <p>Les informations de session sont utilisées pour permettre
-        le fonctionnement de la connexion.</p>
+        <p>Les informations de profil sont conservées dans la session
+        de connexion du navigateur. Elles sont supprimées lorsque
+        l'utilisateur se déconnecte ou lorsque la session expire.</p>
 
-        <h2>4. Partage</h2>
+        <h2>4. Partage des informations</h2>
         <p>IZIIX ne vend pas les informations personnelles des utilisateurs.
-        Les services tiers restent soumis à leurs propres politiques.</p>
+        Les services tiers utilisés restent soumis à leurs propres
+        politiques de confidentialité.</p>
 
-        <h2>5. Contact</h2>
-        <p>Contact : guillermnoa@gmail.com</p>
+        <h2>5. Droits des utilisateurs</h2>
+        <p>Pour toute question concernant les données personnelles,
+        les utilisateurs peuvent contacter IZIIX à l'adresse suivante :
+        guillermnoa@gmail.com</p>
+
     </body>
     </html>
     """)
 
 # ==================================================
-# VERIFICATION TIKTOK - NOUVEAU FICHIER
+# VERIFICATION TIKTOK - CONDITIONS D'UTILISATION
 # ==================================================
 
 @app.route("/terms/tiktokkespsfwSl9qHM44EEvkoWVdyPi84iZVF.txt")
 def tiktok_terms_verification():
+
     return (
         "tiktok-developers-site-verification=kespsfwSl9qHM44EEvkoWVdyPi84iZVF",
         200,
@@ -335,11 +379,25 @@ def tiktok_terms_verification():
     )
 
 # ==================================================
-# VERIFICATION TIKTOK - ANCIEN FICHIER
+# VERIFICATION TIKTOK - POLITIQUE DE CONFIDENTIALITE
+# ==================================================
+
+@app.route("/privacy/tiktokRa8ANSlFc3s4QD37A9gE4GMxfWPfAzkf.txt")
+def tiktok_privacy_verification():
+
+    return (
+        "tiktok-developers-site-verification=Ra8ANSlFc3s4QD37A9gE4GMxfWPfAzkf",
+        200,
+        {"Content-Type": "text/plain; charset=utf-8"}
+    )
+
+# ==================================================
+# ANCIENNE VERIFICATION TIKTOK
 # ==================================================
 
 @app.route("/tiktokX3eKnyn0WFTUJ5m2FzHWkVwz60bnyzOh.txt")
 def old_tiktok_verification():
+
     return (
         "tiktok-developers-site-verification=X3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh",
         200,
