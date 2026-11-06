@@ -21,6 +21,21 @@ USER_INFO_URL = "https://open.tiktokapis.com/v2/user/info/"
 
 CONTACT_EMAIL = "guillermnoa@gmail.com"
 
+OLD_VERIFICATION = (
+    "tiktok-developers-site-verification="
+    "X3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh"
+)
+
+SECOND_VERIFICATION = (
+    "tiktok-developers-site-verification="
+    "bSg4ZQYHJc1ggx7CBYnpUzUVnxHEGTHd"
+)
+
+NEW_VERIFICATION = (
+    "tiktok-developers-site-verification="
+    "FJP6Uv8CU5vKThPxlm2G6N717JIWmjpc"
+)
+
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
@@ -35,7 +50,7 @@ if not CLIENT_KEY or not CLIENT_SECRET:
 
 
 # =====================================
-# DESIGN
+# DESIGN DU SITE
 # =====================================
 
 def page(content):
@@ -100,29 +115,17 @@ def page(content):
 
 
 # =====================================
-# VERIFICATION TIKTOK - PREMIER CODE
+# VERIFICATIONS TIKTOK
 # =====================================
 
 @app.route("/tiktokX3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh.txt")
 def verification_old():
-    return Response(
-        "tiktok-developers-site-verification="
-        "X3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh",
-        mimetype="text/plain"
-    )
+    return Response(OLD_VERIFICATION, mimetype="text/plain")
 
 
-# =====================================
-# VERIFICATION TIKTOK - NOUVEAU CODE
-# =====================================
-
-@app.route("/<path:filename>.txt")
+@app.route("/<filename>.txt")
 def verification_new(filename):
-    return Response(
-        "tiktok-developers-site-verification="
-        "bSg4ZQYHJc1ggx7CBYnpUzUVnxHEGTHd",
-        mimetype="text/plain"
-    )
+    return Response(NEW_VERIFICATION, mimetype="text/plain")
 
 
 # =====================================
@@ -137,14 +140,14 @@ def terms():
 
         <h3>1. Présentation</h3>
         <p>
-            IZIIX est une plateforme communautaire destinée
-            aux utilisateurs et créateurs TikTok.
+            IZIIX est une plateforme communautaire en développement
+            destinée aux utilisateurs et créateurs TikTok.
         </p>
 
         <h3>2. Utilisation du service</h3>
         <p>
-            L'utilisateur s'engage à fournir des informations
-            exactes et à respecter les lois applicables.
+            L'utilisateur s'engage à fournir des informations exactes
+            et à respecter les lois applicables.
         </p>
 
         <h3>3. Connexion TikTok</h3>
@@ -156,18 +159,11 @@ def terms():
 
         <h3>4. Disponibilité</h3>
         <p>
-            IZIIX est un service en développement.
-            Certaines fonctionnalités peuvent être
-            indisponibles ou modifiées.
+            Certaines fonctionnalités peuvent être indisponibles,
+            modifiées ou interrompues pendant le développement.
         </p>
 
-        <h3>5. Responsabilité</h3>
-        <p>
-            IZIIX ne garantit pas une disponibilité permanente
-            du service.
-        </p>
-
-        <h3>6. Contact</h3>
+        <h3>5. Contact</h3>
         <p>
             <a href="mailto:guillermnoa@gmail.com">
                 guillermnoa@gmail.com
@@ -203,14 +199,9 @@ def privacy():
 
         <h3>3. Stockage</h3>
         <p>
-            Dans la version actuelle, les informations de profil
+            Dans cette version, les informations de profil
             sont conservées dans une session de navigateur
             sécurisée par signature.
-        </p>
-
-        <p>
-            Les jetons d'accès TikTok ne sont pas enregistrés
-            dans une base de données par cette version.
         </p>
 
         <h3>4. Cookies et sessions</h3>
@@ -219,7 +210,7 @@ def privacy():
             la connexion et protéger l'authentification.
         </p>
 
-        <h3>5. Contact et demandes</h3>
+        <h3>5. Contact</h3>
         <p>
             Pour toute question concernant les données personnelles :
             <a href="mailto:guillermnoa@gmail.com">
