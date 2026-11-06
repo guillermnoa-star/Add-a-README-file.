@@ -3,25 +3,19 @@ import os
 import secrets
 import requests
 
-from flask import (
-    Flask,
-    redirect,
-    request,
-    session,
-    url_for,
-    render_template_string
-)
+from urllib.parse import urlencode
+from flask import Flask, redirect, request, session, url_for, render_template_string
 
 app = Flask(__name__)
 
-# --------------------------------------------------
-# CONFIGURATION
-# --------------------------------------------------
+# ==================================================
+# CONFIGURATION IZIIX
+# ==================================================
 
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 if not app.secret_key:
-    raise RuntimeError("La variable FLASK_SECRET_KEY est absente sur Render.")
+    raise RuntimeError("FLASK_SECRET_KEY manquant sur Render.")
 
 CLIENT_KEY = os.environ.get("TIKTOK_CLIENT_KEY")
 CLIENT_SECRET = os.environ.get("TIKTOK_CLIENT_SECRET")
@@ -32,9 +26,9 @@ AUTHORIZE_URL = "https://www.tiktok.com/v2/auth/authorize/"
 TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
 USER_INFO_URL = "https://open.tiktokapis.com/v2/user/info/"
 
-# --------------------------------------------------
+# ==================================================
 # PAGE D'ACCUEIL
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/")
 def home():
@@ -47,7 +41,7 @@ def home():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>IZIIX - Connexion</title>
+        <title>IZIIX - Connexion TikTok</title>
         <style>
             body {
                 background: #101010;
@@ -56,7 +50,10 @@ def home():
                 text-align: center;
                 padding: 80px 20px;
             }
-            h1 { color: #ff3030; font-size: 45px; }
+            h1 {
+                color: #ff3030;
+                font-size: 48px;
+            }
             a {
                 display: inline-block;
                 background: #ff3030;
@@ -76,9 +73,9 @@ def home():
     </html>
     """)
 
-# --------------------------------------------------
+# ==================================================
 # CONNEXION TIKTOK
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/login")
 def login():
@@ -96,13 +93,11 @@ def login():
         "state": state
     }
 
-    from urllib.parse import urlencode
-
     return redirect(AUTHORIZE_URL + "?" + urlencode(params))
 
-# --------------------------------------------------
-# RETOUR TIKTOK / CALLBACK
-# --------------------------------------------------
+# ==================================================
+# RETOUR DE TIKTOK
+# ==================================================
 
 @app.route("/callback")
 def callback():
@@ -120,64 +115,64 @@ def callback():
 
     session.pop("oauth_state", None)
 
-    token_response = requests.post(
-        TOKEN_URL,
-        data={
-            "client_key": CLIENT_KEY,
-            "client_secret": CLIENT_SECRET,
-            "code": code,
-            "grant_type": "authorization_code",
-            "redirect_uri": REDIRECT_URI
-        },
-        headers={
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        timeout=20
-    )
-
-    token_data = token_response.json()
-
-    if token_response.status_code != 200 or "access_token" not in token_data:
-        return (
-            "Erreur lors de la récupération du token TikTok : "
-            + str(token_data),
-            400
+    try:
+        token_response = requests.post(
+            TOKEN_URL,
+            data={
+                "client_key": CLIENT_KEY,
+                "client_secret": CLIENT_SECRET,
+                "code": code,
+                "grant_type": "authorization_code",
+                "redirect_uri": REDIRECT_URI
+            },
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            timeout=20
         )
 
-    access_token = token_data["access_token"]
+        token_data = token_response.json()
 
-    user_response = requests.get(
-        USER_INFO_URL,
-        params={
-            "fields": "open_id,avatar_url,display_name"
-        },
-        headers={
-            "Authorization": "Bearer " + access_token
-        },
-        timeout=20
-    )
+        if token_response.status_code != 200 or "access_token" not in token_data:
+            return "Erreur TikTok lors de la connexion : " + str(token_data), 400
 
-    user_data = user_response.json()
+        access_token = token_data["access_token"]
 
-    if user_response.status_code != 200:
-        return "Erreur lors de la récupération du profil TikTok : " + str(user_data), 400
+        user_response = requests.get(
+            USER_INFO_URL,
+            params={
+                "fields": "open_id,avatar_url,display_name"
+            },
+            headers={
+                "Authorization": "Bearer " + access_token
+            },
+            timeout=20
+        )
 
-    user = user_data.get("data", {}).get("user")
+        user_data = user_response.json()
 
-    if not user:
-        return "Impossible de récupérer les informations du profil TikTok.", 400
+        if user_response.status_code != 200:
+            return "Erreur lors de la récupération du profil : " + str(user_data), 400
 
-    session["user"] = {
-        "open_id": user.get("open_id"),
-        "display_name": user.get("display_name"),
-        "avatar_url": user.get("avatar_url")
-    }
+        user = user_data.get("data", {}).get("user")
 
-    return redirect(url_for("profile"))
+        if not user:
+            return "Impossible de récupérer le profil TikTok.", 400
 
-# --------------------------------------------------
-# PROFIL
-# --------------------------------------------------
+        session["user"] = {
+            "open_id": user.get("open_id"),
+            "display_name": user.get("display_name"),
+            "avatar_url": user.get("avatar_url")
+        }
+
+        return redirect(url_for("profile"))
+
+    except requests.RequestException:
+        return "Impossible de contacter TikTok. Réessaie plus tard.", 500
+
+# ==================================================
+# PROFIL UTILISATEUR
+# ==================================================
 
 @app.route("/profile")
 def profile():
@@ -192,7 +187,7 @@ def profile():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Mon profil - IZIIX</title>
+        <title>Profil IZIIX</title>
         <style>
             body {
                 background: #101010;
@@ -201,7 +196,9 @@ def profile():
                 text-align: center;
                 padding: 60px 20px;
             }
-            h1 { color: #ff3030; }
+            h1 {
+                color: #ff3030;
+            }
             img {
                 width: 110px;
                 height: 110px;
@@ -220,28 +217,31 @@ def profile():
     </head>
     <body>
         <h1>IZIIX</h1>
+
         {% if user.avatar_url %}
             <img src="{{ user.avatar_url }}" alt="Photo de profil">
         {% endif %}
+
         <h2>{{ user.display_name }}</h2>
         <p>Ton compte TikTok est connecté.</p>
+
         <a href="/logout">Se déconnecter</a>
     </body>
     </html>
     """, user=user)
 
-# --------------------------------------------------
+# ==================================================
 # DECONNEXION
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("home"))
 
-# --------------------------------------------------
+# ==================================================
 # CONDITIONS D'UTILISATION
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/terms")
 @app.route("/terms/")
@@ -275,14 +275,14 @@ def terms():
         dysfonctionnements provenant de services tiers.</p>
 
         <h2>5. Contact</h2>
-        <p>Pour toute question : guillermnoa@gmail.com</p>
+        <p>Contact : guillermnoa@gmail.com</p>
     </body>
     </html>
     """)
 
-# --------------------------------------------------
+# ==================================================
 # POLITIQUE DE CONFIDENTIALITE
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/privacy")
 @app.route("/privacy/")
@@ -310,25 +310,33 @@ def privacy():
 
         <h2>3. Conservation</h2>
         <p>Les informations de session sont utilisées pour permettre
-        le fonctionnement de la connexion. La durée de conservation
-        des éventuelles données supplémentaires dépend des traitements
-        effectivement mis en place.</p>
+        le fonctionnement de la connexion.</p>
 
         <h2>4. Partage</h2>
         <p>IZIIX ne vend pas les informations personnelles des utilisateurs.
-        Les services tiers utilisés, notamment TikTok, restent soumis
-        à leurs propres politiques de confidentialité.</p>
+        Les services tiers restent soumis à leurs propres politiques.</p>
 
         <h2>5. Contact</h2>
-        <p>Pour toute question relative à la confidentialité :
-        guillermnoa@gmail.com</p>
+        <p>Contact : guillermnoa@gmail.com</p>
     </body>
     </html>
     """)
 
-# --------------------------------------------------
+# ==================================================
+# VERIFICATION TIKTOK - NOUVEAU FICHIER
+# ==================================================
+
+@app.route("/terms/tiktokkespsfwSl9qHM44EEvkoWVdyPi84iZVF.txt")
+def tiktok_terms_verification():
+    return (
+        "tiktok-developers-site-verification=kespsfwSl9qHM44EEvkoWVdyPi84iZVF",
+        200,
+        {"Content-Type": "text/plain; charset=utf-8"}
+    )
+
+# ==================================================
 # VERIFICATION TIKTOK - ANCIEN FICHIER
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/tiktokX3eKnyn0WFTUJ5m2FzHWkVwz60bnyzOh.txt")
 def old_tiktok_verification():
@@ -338,29 +346,20 @@ def old_tiktok_verification():
         {"Content-Type": "text/plain; charset=utf-8"}
     )
 
-# --------------------------------------------------
-# VERIFICATION TIKTOK - CONDITIONS D'UTILISATION
-# --------------------------------------------------
-
-@app.route("/terms/tiktoka46z0UqGcNBVhbsgm742ELxtpg5bnIxd.txt")
-def tiktok_terms_verification():
-    return (
-        "tiktok-developers-site-verification=a46z0UqGcNBVhbsgm742ELxtpg5bnIxd",
-        200,
-        {"Content-Type": "text/plain; charset=utf-8"}
-    )
-
-# --------------------------------------------------
+# ==================================================
 # TEST DU SERVEUR
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/health")
 def health():
     return "IZIIX OK", 200
 
-# --------------------------------------------------
+# ==================================================
 # DEMARRAGE LOCAL
-# --------------------------------------------------
+# ==================================================
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000))
+    )
