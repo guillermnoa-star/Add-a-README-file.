@@ -26,11 +26,6 @@ OLD_VERIFICATION = (
     "X3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh"
 )
 
-SECOND_VERIFICATION = (
-    "tiktok-developers-site-verification="
-    "bSg4ZQYHJc1ggx7CBYnpUzUVnxHEGTHd"
-)
-
 NEW_VERIFICATION = (
     "tiktok-developers-site-verification="
     "FJP6Uv8CU5vKThPxlm2G6N717JIWmjpc"
@@ -50,7 +45,7 @@ if not CLIENT_KEY or not CLIENT_SECRET:
 
 
 # =====================================
-# DESIGN DU SITE
+# DESIGN COMMUN
 # =====================================
 
 def page(content):
@@ -115,17 +110,32 @@ def page(content):
 
 
 # =====================================
-# VERIFICATIONS TIKTOK
+# ANCIENNE VERIFICATION TIKTOK
 # =====================================
 
-@app.route("/tiktokX3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh.txt")
+@app.route(
+    "/tiktokX3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh.txt"
+)
 def verification_old():
     return Response(OLD_VERIFICATION, mimetype="text/plain")
 
 
-@app.route("/<filename>.txt")
+# =====================================
+# NOUVELLE VERIFICATION TIKTOK
+# Accepte les fichiers .txt à la racine
+# et dans les sous-dossiers /terms/ et /privacy/
+# =====================================
+
+@app.route("/<path:filename>")
 def verification_new(filename):
-    return Response(NEW_VERIFICATION, mimetype="text/plain")
+
+    if not filename.endswith(".txt"):
+        return "Page introuvable", 404
+
+    return Response(
+        NEW_VERIFICATION,
+        mimetype="text/plain"
+    )
 
 
 # =====================================
@@ -133,6 +143,7 @@ def verification_new(filename):
 # =====================================
 
 @app.route("/terms")
+@app.route("/terms/")
 def terms():
     return page("""
         <h2>Conditions d'utilisation</h2>
@@ -159,8 +170,9 @@ def terms():
 
         <h3>4. Disponibilité</h3>
         <p>
+            IZIIX est un service en développement.
             Certaines fonctionnalités peuvent être indisponibles,
-            modifiées ou interrompues pendant le développement.
+            modifiées ou interrompues.
         </p>
 
         <h3>5. Contact</h3>
@@ -177,6 +189,7 @@ def terms():
 # =====================================
 
 @app.route("/privacy")
+@app.route("/privacy/")
 def privacy():
     return page("""
         <h2>Politique de confidentialité</h2>
@@ -264,6 +277,7 @@ def login():
 
 @app.route("/callback")
 def callback():
+
     if request.args.get("error"):
         error = html.escape(
             request.args.get("error_description", "Connexion refusée")
@@ -274,7 +288,9 @@ def callback():
     saved_state = session.pop("oauth_state", None)
 
     if not saved_state or not returned_state:
-        return page("<h2>Erreur de sécurité</h2><p>Réessaie.</p>"), 400
+        return page(
+            "<h2>Erreur de sécurité</h2><p>Réessaie.</p>"
+        ), 400
 
     if not secrets.compare_digest(saved_state, returned_state):
         return page("<h2>Vérification de sécurité échouée.</h2>"), 400
@@ -287,7 +303,9 @@ def callback():
     try:
         token_response = requests.post(
             TOKEN_URL,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
             data={
                 "client_key": CLIENT_KEY,
                 "client_secret": CLIENT_SECRET,
@@ -297,6 +315,7 @@ def callback():
             },
             timeout=20
         )
+
         token_data = token_response.json()
 
     except (requests.RequestException, ValueError):
@@ -310,10 +329,15 @@ def callback():
     try:
         user_response = requests.get(
             USER_INFO_URL,
-            headers={"Authorization": f"Bearer {access_token}"},
-            params={"fields": "open_id,avatar_url,display_name"},
+            headers={
+                "Authorization": f"Bearer {access_token}"
+            },
+            params={
+                "fields": "open_id,avatar_url,display_name"
+            },
             timeout=20
         )
+
         user_data = user_response.json()
 
     except (requests.RequestException, ValueError):
@@ -328,9 +352,13 @@ def callback():
         return page("<h2>Profil TikTok introuvable.</h2>"), 400
 
     session.clear()
+
     session["tiktok_profile"] = {
         "open_id": profile_data.get("open_id"),
-        "display_name": profile_data.get("display_name", "Utilisateur TikTok"),
+        "display_name": profile_data.get(
+            "display_name",
+            "Utilisateur TikTok"
+        ),
         "avatar_url": profile_data.get("avatar_url", "")
     }
 
@@ -343,6 +371,7 @@ def callback():
 
 @app.route("/profile")
 def profile():
+
     user = session.get("tiktok_profile")
 
     if not user:
@@ -382,7 +411,10 @@ def logout():
 
 @app.route("/health")
 def health():
-    return {"status": "ok", "application": "IZIIX"}
+    return {
+        "status": "ok",
+        "application": "IZIIX"
+    }
 
 
 # =====================================
