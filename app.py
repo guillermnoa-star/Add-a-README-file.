@@ -35,7 +35,7 @@ if not CLIENT_KEY or not CLIENT_SECRET:
 
 
 # =====================================
-# DESIGN COMMUN
+# DESIGN
 # =====================================
 
 def page(content):
@@ -100,14 +100,27 @@ def page(content):
 
 
 # =====================================
-# VERIFICATION TIKTOK
+# VERIFICATION TIKTOK - PREMIER CODE
 # =====================================
 
 @app.route("/tiktokX3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh.txt")
-def tiktok_verification():
+def verification_old():
     return Response(
         "tiktok-developers-site-verification="
         "X3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh",
+        mimetype="text/plain"
+    )
+
+
+# =====================================
+# VERIFICATION TIKTOK - NOUVEAU CODE
+# =====================================
+
+@app.route("/<path:filename>.txt")
+def verification_new(filename):
+    return Response(
+        "tiktok-developers-site-verification="
+        "bSg4ZQYHJc1ggx7CBYnpUzUVnxHEGTHd",
         mimetype="text/plain"
     )
 
@@ -124,46 +137,38 @@ def terms():
 
         <h3>1. Présentation</h3>
         <p>
-            IZIIX est une plateforme communautaire destinée aux
-            utilisateurs et créateurs TikTok, avec un projet
-            d'intégration à Discord.
+            IZIIX est une plateforme communautaire destinée
+            aux utilisateurs et créateurs TikTok.
         </p>
 
         <h3>2. Utilisation du service</h3>
         <p>
-            L'utilisateur s'engage à fournir des informations exactes,
-            à respecter les lois applicables et à ne pas utiliser
-            IZIIX à des fins frauduleuses ou abusives.
+            L'utilisateur s'engage à fournir des informations
+            exactes et à respecter les lois applicables.
         </p>
 
         <h3>3. Connexion TikTok</h3>
         <p>
-            La connexion TikTok utilise le système officiel
-            TikTok Login Kit. L'utilisateur choisit d'autoriser
-            ou non l'accès aux informations demandées.
-        </p>
-        <p>
-            TikTok reste un service indépendant soumis à ses
-            propres conditions d'utilisation.
+            La connexion utilise TikTok Login Kit.
+            L'utilisateur choisit d'autoriser ou non
+            l'accès aux informations demandées.
         </p>
 
         <h3>4. Disponibilité</h3>
         <p>
-            IZIIX est un service en développement. Certaines
-            fonctionnalités peuvent être indisponibles,
-            modifiées ou interrompues.
+            IZIIX est un service en développement.
+            Certaines fonctionnalités peuvent être
+            indisponibles ou modifiées.
         </p>
 
         <h3>5. Responsabilité</h3>
         <p>
             IZIIX ne garantit pas une disponibilité permanente
-            du service. Les utilisateurs restent responsables
-            de l'utilisation de leur compte.
+            du service.
         </p>
 
         <h3>6. Contact</h3>
         <p>
-            Pour toute question concernant ces conditions :
             <a href="mailto:guillermnoa@gmail.com">
                 guillermnoa@gmail.com
             </a>
@@ -184,12 +189,12 @@ def privacy():
         <h3>1. Informations collectées</h3>
         <p>
             Lorsqu'un utilisateur se connecte avec TikTok,
-            IZIIX peut recevoir les informations autorisées
-            par l'utilisateur, notamment son identifiant
-            TikTok, son nom d'affichage et sa photo de profil.
+            IZIIX peut recevoir son identifiant TikTok,
+            son nom d'affichage et sa photo de profil,
+            selon les autorisations accordées.
         </p>
 
-        <h3>2. Utilisation des informations</h3>
+        <h3>2. Utilisation</h3>
         <p>
             Ces informations servent à identifier le profil
             TikTok connecté et à afficher les informations
@@ -199,41 +204,24 @@ def privacy():
         <h3>3. Stockage</h3>
         <p>
             Dans la version actuelle, les informations de profil
-            récupérées sont conservées dans une session de
-            navigateur sécurisée par signature.
+            sont conservées dans une session de navigateur
+            sécurisée par signature.
         </p>
+
         <p>
             Les jetons d'accès TikTok ne sont pas enregistrés
-            dans cette session ni dans une base de données
-            par cette version du service.
+            dans une base de données par cette version.
         </p>
 
-        <h3>4. Partage des informations</h3>
-        <p>
-            La connexion nécessite une communication avec
-            TikTok. Les informations sont traitées conformément
-            aux autorisations accordées et aux services utilisés.
-        </p>
-
-        <h3>5. Cookies et sessions</h3>
+        <h3>4. Cookies et sessions</h3>
         <p>
             IZIIX utilise un cookie de session pour maintenir
-            la connexion et protéger le parcours d'authentification.
+            la connexion et protéger l'authentification.
         </p>
 
-        <h3>6. Sécurité</h3>
+        <h3>5. Contact et demandes</h3>
         <p>
-            Des mesures techniques sont utilisées pour protéger
-            les échanges et les informations de session.
-            Aucun système ne peut toutefois garantir une
-            sécurité absolue.
-        </p>
-
-        <h3>7. Droits et contact</h3>
-        <p>
-            Pour toute question concernant tes données
-            personnelles ou une demande relative à leur
-            traitement, contacte :
+            Pour toute question concernant les données personnelles :
             <a href="mailto:guillermnoa@gmail.com">
                 guillermnoa@gmail.com
             </a>
