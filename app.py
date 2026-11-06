@@ -8,11 +8,6 @@ import requests
 from flask import Flask, redirect, request, session, url_for, Response
 
 app = Flask(__name__)
-
-# =====================================
-# CONFIGURATION
-# =====================================
-
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 CLIENT_KEY = os.environ.get("TIKTOK_CLIENT_KEY")
@@ -23,6 +18,8 @@ REDIRECT_URI = "https://iziix-login.onrender.com/callback"
 AUTHORIZE_URL = "https://www.tiktok.com/v2/auth/authorize/"
 TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
 USER_INFO_URL = "https://open.tiktokapis.com/v2/user/info/"
+
+CONTACT_EMAIL = "guillermnoa@gmail.com"
 
 app.config.update(
     SESSION_COOKIE_SECURE=True,
@@ -38,21 +35,7 @@ if not CLIENT_KEY or not CLIENT_SECRET:
 
 
 # =====================================
-# VERIFICATION DU SITE PAR TIKTOK
-# =====================================
-
-@app.route("/tiktokX3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh.txt")
-def tiktok_verification():
-    content = (
-        "tiktok-developers-site-verification="
-        "X3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh"
-    )
-
-    return Response(content, mimetype="text/plain")
-
-
-# =====================================
-# DESIGN DU SITE
+# DESIGN COMMUN
 # =====================================
 
 def page(content):
@@ -63,30 +46,26 @@ def page(content):
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>IZIIX</title>
-
         <style>
             body {{
                 background: #101010;
                 color: white;
                 font-family: Arial, sans-serif;
-                text-align: center;
-                padding: 60px 15px;
+                padding: 35px 15px;
+                margin: 0;
             }}
-
             .card {{
                 background: #1c1c1c;
                 border: 1px solid #333;
                 border-radius: 15px;
                 padding: 30px;
-                max-width: 430px;
+                max-width: 750px;
                 margin: auto;
+                line-height: 1.7;
             }}
-
-            h1 {{
-                color: #ff334f;
-            }}
-
-            a.button {{
+            h1, h2 {{ color: #ff334f; }}
+            a {{ color: #ff667a; }}
+            .button {{
                 display: inline-block;
                 background: #ff334f;
                 color: white;
@@ -95,7 +74,6 @@ def page(content):
                 text-decoration: none;
                 margin-top: 15px;
             }}
-
             img {{
                 width: 100px;
                 height: 100px;
@@ -104,11 +82,17 @@ def page(content):
             }}
         </style>
     </head>
-
     <body>
         <div class="card">
             <h1>IZIIX</h1>
             {content}
+            <hr>
+            <p>
+                <a href="/">Accueil</a> |
+                <a href="/terms">Conditions d'utilisation</a> |
+                <a href="/privacy">Confidentialité</a>
+            </p>
+            <p>Contact : {CONTACT_EMAIL}</p>
         </div>
     </body>
     </html>
@@ -116,22 +100,159 @@ def page(content):
 
 
 # =====================================
-# PAGE D'ACCUEIL
+# VERIFICATION TIKTOK
+# =====================================
+
+@app.route("/tiktokX3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh.txt")
+def tiktok_verification():
+    return Response(
+        "tiktok-developers-site-verification="
+        "X3eKnyn0WFTuJ5m2FzHWkVwz60bnyzOh",
+        mimetype="text/plain"
+    )
+
+
+# =====================================
+# CONDITIONS D'UTILISATION
+# =====================================
+
+@app.route("/terms")
+def terms():
+    return page("""
+        <h2>Conditions d'utilisation</h2>
+        <p><strong>Dernière mise à jour : 6 novembre 2026</strong></p>
+
+        <h3>1. Présentation</h3>
+        <p>
+            IZIIX est une plateforme communautaire destinée aux
+            utilisateurs et créateurs TikTok, avec un projet
+            d'intégration à Discord.
+        </p>
+
+        <h3>2. Utilisation du service</h3>
+        <p>
+            L'utilisateur s'engage à fournir des informations exactes,
+            à respecter les lois applicables et à ne pas utiliser
+            IZIIX à des fins frauduleuses ou abusives.
+        </p>
+
+        <h3>3. Connexion TikTok</h3>
+        <p>
+            La connexion TikTok utilise le système officiel
+            TikTok Login Kit. L'utilisateur choisit d'autoriser
+            ou non l'accès aux informations demandées.
+        </p>
+        <p>
+            TikTok reste un service indépendant soumis à ses
+            propres conditions d'utilisation.
+        </p>
+
+        <h3>4. Disponibilité</h3>
+        <p>
+            IZIIX est un service en développement. Certaines
+            fonctionnalités peuvent être indisponibles,
+            modifiées ou interrompues.
+        </p>
+
+        <h3>5. Responsabilité</h3>
+        <p>
+            IZIIX ne garantit pas une disponibilité permanente
+            du service. Les utilisateurs restent responsables
+            de l'utilisation de leur compte.
+        </p>
+
+        <h3>6. Contact</h3>
+        <p>
+            Pour toute question concernant ces conditions :
+            <a href="mailto:guillermnoa@gmail.com">
+                guillermnoa@gmail.com
+            </a>
+        </p>
+    """)
+
+
+# =====================================
+# POLITIQUE DE CONFIDENTIALITE
+# =====================================
+
+@app.route("/privacy")
+def privacy():
+    return page("""
+        <h2>Politique de confidentialité</h2>
+        <p><strong>Dernière mise à jour : 6 novembre 2026</strong></p>
+
+        <h3>1. Informations collectées</h3>
+        <p>
+            Lorsqu'un utilisateur se connecte avec TikTok,
+            IZIIX peut recevoir les informations autorisées
+            par l'utilisateur, notamment son identifiant
+            TikTok, son nom d'affichage et sa photo de profil.
+        </p>
+
+        <h3>2. Utilisation des informations</h3>
+        <p>
+            Ces informations servent à identifier le profil
+            TikTok connecté et à afficher les informations
+            correspondantes sur IZIIX.
+        </p>
+
+        <h3>3. Stockage</h3>
+        <p>
+            Dans la version actuelle, les informations de profil
+            récupérées sont conservées dans une session de
+            navigateur sécurisée par signature.
+        </p>
+        <p>
+            Les jetons d'accès TikTok ne sont pas enregistrés
+            dans cette session ni dans une base de données
+            par cette version du service.
+        </p>
+
+        <h3>4. Partage des informations</h3>
+        <p>
+            La connexion nécessite une communication avec
+            TikTok. Les informations sont traitées conformément
+            aux autorisations accordées et aux services utilisés.
+        </p>
+
+        <h3>5. Cookies et sessions</h3>
+        <p>
+            IZIIX utilise un cookie de session pour maintenir
+            la connexion et protéger le parcours d'authentification.
+        </p>
+
+        <h3>6. Sécurité</h3>
+        <p>
+            Des mesures techniques sont utilisées pour protéger
+            les échanges et les informations de session.
+            Aucun système ne peut toutefois garantir une
+            sécurité absolue.
+        </p>
+
+        <h3>7. Droits et contact</h3>
+        <p>
+            Pour toute question concernant tes données
+            personnelles ou une demande relative à leur
+            traitement, contacte :
+            <a href="mailto:guillermnoa@gmail.com">
+                guillermnoa@gmail.com
+            </a>
+        </p>
+    """)
+
+
+# =====================================
+# ACCUEIL
 # =====================================
 
 @app.route("/")
 def home():
-
     if session.get("tiktok_profile"):
         return redirect(url_for("profile"))
 
     return page("""
         <h2>Connecte ton compte TikTok</h2>
-
-        <p>
-            Rejoins la communauté IZIIX.
-        </p>
-
+        <p>Rejoins la communauté IZIIX.</p>
         <a class="button" href="/login">
             Se connecter avec TikTok
         </a>
@@ -144,7 +265,6 @@ def home():
 
 @app.route("/login")
 def login():
-
     state = secrets.token_urlsafe(32)
     session["oauth_state"] = state
 
@@ -156,66 +276,39 @@ def login():
         "state": state
     }
 
-    authorization_url = AUTHORIZE_URL + "?" + urlencode(params)
-
-    return redirect(authorization_url)
+    return redirect(AUTHORIZE_URL + "?" + urlencode(params))
 
 
 # =====================================
-# RETOUR DE TIKTOK
+# RETOUR TIKTOK
 # =====================================
 
 @app.route("/callback")
 def callback():
-
     if request.args.get("error"):
-
         error = html.escape(
-            request.args.get(
-                "error_description",
-                "Connexion refusée"
-            )
+            request.args.get("error_description", "Connexion refusée")
         )
-
-        return page(
-            f"<h2>Connexion refusée</h2><p>{error}</p>"
-        )
+        return page(f"<h2>Connexion refusée</h2><p>{error}</p>")
 
     returned_state = request.args.get("state")
     saved_state = session.pop("oauth_state", None)
 
     if not saved_state or not returned_state:
+        return page("<h2>Erreur de sécurité</h2><p>Réessaie.</p>"), 400
 
-        return page(
-            "<h2>Erreur de sécurité</h2><p>Réessaie.</p>"
-        ), 400
-
-    if not secrets.compare_digest(
-        saved_state,
-        returned_state
-    ):
-
-        return page(
-            "<h2>Vérification de sécurité échouée.</h2>"
-        ), 400
+    if not secrets.compare_digest(saved_state, returned_state):
+        return page("<h2>Vérification de sécurité échouée.</h2>"), 400
 
     code = request.args.get("code")
 
     if not code:
-
-        return page(
-            "<h2>Code TikTok manquant.</h2>"
-        ), 400
-
-    # Récupération du jeton TikTok
+        return page("<h2>Code TikTok manquant.</h2>"), 400
 
     try:
-
         token_response = requests.post(
             TOKEN_URL,
-            headers={
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
             data={
                 "client_key": CLIENT_KEY,
                 "client_secret": CLIENT_SECRET,
@@ -225,73 +318,40 @@ def callback():
             },
             timeout=20
         )
-
         token_data = token_response.json()
 
     except (requests.RequestException, ValueError):
-
-        return page(
-            "<h2>Erreur de connexion à TikTok.</h2>"
-        ), 502
+        return page("<h2>Erreur de connexion à TikTok.</h2>"), 502
 
     access_token = token_data.get("access_token")
 
     if token_response.status_code != 200 or not access_token:
-
-        return page(
-            "<h2>Connexion impossible</h2>"
-            "<p>Vérifie la configuration de ton application TikTok.</p>"
-        ), 400
-
-    # Récupération du profil TikTok
+        return page("<h2>Connexion TikTok impossible.</h2>"), 400
 
     try:
-
         user_response = requests.get(
             USER_INFO_URL,
-            headers={
-                "Authorization": f"Bearer {access_token}"
-            },
-            params={
-                "fields": "open_id,avatar_url,display_name"
-            },
+            headers={"Authorization": f"Bearer {access_token}"},
+            params={"fields": "open_id,avatar_url,display_name"},
             timeout=20
         )
-
         user_data = user_response.json()
 
     except (requests.RequestException, ValueError):
-
-        return page(
-            "<h2>Impossible de récupérer ton profil.</h2>"
-        ), 502
+        return page("<h2>Impossible de récupérer ton profil.</h2>"), 502
 
     if user_response.status_code != 200:
+        return page("<h2>Erreur de récupération du profil.</h2>"), 400
 
-        return page(
-            "<h2>Erreur de récupération du profil TikTok.</h2>"
-        ), 400
-
-    profile_data = user_data.get(
-        "data", {}
-    ).get("user", {})
+    profile_data = user_data.get("data", {}).get("user", {})
 
     if not profile_data.get("open_id"):
-
-        return page(
-            "<h2>Profil TikTok introuvable.</h2>"
-        ), 400
-
-    # Enregistrement des informations du profil
+        return page("<h2>Profil TikTok introuvable.</h2>"), 400
 
     session.clear()
-
     session["tiktok_profile"] = {
         "open_id": profile_data.get("open_id"),
-        "display_name": profile_data.get(
-            "display_name",
-            "Utilisateur TikTok"
-        ),
+        "display_name": profile_data.get("display_name", "Utilisateur TikTok"),
         "avatar_url": profile_data.get("avatar_url", "")
     }
 
@@ -299,43 +359,31 @@ def callback():
 
 
 # =====================================
-# PROFIL UTILISATEUR
+# PROFIL
 # =====================================
 
 @app.route("/profile")
 def profile():
-
     user = session.get("tiktok_profile")
 
     if not user:
         return redirect(url_for("home"))
 
     name = html.escape(user["display_name"])
-    avatar = html.escape(
-        user["avatar_url"],
-        quote=True
+    avatar = html.escape(user["avatar_url"], quote=True)
+
+    avatar_html = (
+        f'<img src="{avatar}" alt="Photo de profil">'
+        if avatar.startswith("https://")
+        else ""
     )
-
-    avatar_html = ""
-
-    if avatar.startswith("https://"):
-
-        avatar_html = (
-            f'<img src="{avatar}" alt="Photo de profil">'
-        )
 
     return page(f"""
         <h2>Connexion réussie !</h2>
-
         {avatar_html}
-
         <h3>{name}</h3>
-
         <p>Ton compte TikTok est connecté à IZIIX.</p>
-
-        <a class="button" href="/logout">
-            Déconnexion
-        </a>
+        <a class="button" href="/logout">Déconnexion</a>
     """)
 
 
@@ -345,23 +393,17 @@ def profile():
 
 @app.route("/logout")
 def logout():
-
     session.clear()
-
     return redirect(url_for("home"))
 
 
 # =====================================
-# VERIFICATION DU SERVEUR
+# SANTE DU SERVEUR
 # =====================================
 
 @app.route("/health")
 def health():
-
-    return {
-        "status": "ok",
-        "application": "IZIIX"
-    }
+    return {"status": "ok", "application": "IZIIX"}
 
 
 # =====================================
@@ -369,7 +411,6 @@ def health():
 # =====================================
 
 if __name__ == "__main__":
-
     app.run(
         host="0.0.0.0",
         port=int(os.environ.get("PORT", 10000))
