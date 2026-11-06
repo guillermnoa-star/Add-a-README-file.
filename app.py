@@ -9,7 +9,7 @@ from flask import Flask, redirect, request, session, url_for
 
 app = Flask(__name__)
 
-# Configuration
+# Configuration sécurisée
 app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 CLIENT_KEY = os.environ.get("TIKTOK_CLIENT_KEY")
@@ -20,6 +20,12 @@ REDIRECT_URI = "https://iziix-login.onrender.com/callback"
 AUTHORIZE_URL = "https://www.tiktok.com/v2/auth/authorize/"
 TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
 USER_INFO_URL = "https://open.tiktokapis.com/v2/user/info/"
+
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax"
+)
 
 if not app.secret_key:
     raise RuntimeError("FLASK_SECRET_KEY manquante dans Render.")
@@ -88,7 +94,9 @@ def home():
     return page("""
         <h2>Connecte ton compte TikTok</h2>
         <p>Rejoins la communauté IZIIX.</p>
-        <a class="button" href="/login">Se connecter avec TikTok</a>
+        <a class="button" href="/login">
+            Se connecter avec TikTok
+        </a>
     """)
 
 
@@ -110,35 +118,30 @@ def login():
 
 @app.route("/callback")
 def callback():
-    # Vérifier les erreurs renvoyées par TikTok
     if request.args.get("error"):
         error = html.escape(
             request.args.get("error_description", "Connexion refusée")
         )
         return page(f"<h2>Connexion refusée</h2><p>{error}</p>")
 
-    # Vérification anti-falsification
     returned_state = request.args.get("state")
     saved_state = session.pop("oauth_state", None)
 
     if not saved_state or not returned_state:
-        return page("<h2>Erreur de sécurité</h2><p>Réessaie la connexion.</p>"), 400
+        return page("<h2>Erreur de sécurité</h2><p>Réessaie.</p>"), 400
 
     if not secrets.compare_digest(saved_state, returned_state):
-        return page("<h2>Erreur de sécurité</h2><p>La vérification a échoué.</p>"), 400
+        return page("<h2>Vérification de sécurité échouée.</h2>"), 400
 
     code = request.args.get("code")
 
     if not code:
-        return page("<h2>Erreur</h2><p>Code TikTok manquant.</p>"), 400
+        return page("<h2>Code TikTok manquant.</h2>"), 400
 
-    # Échanger le code contre un access token
     try:
         token_response = requests.post(
             TOKEN_URL,
-            headers={
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
             data={
                 "client_key": CLIENT_KEY,
                 "client_secret": CLIENT_SECRET,
@@ -151,54 +154,43 @@ def callback():
 
         token_data = token_response.json()
 
-    except requests.RequestException:
-        return page("<h2>Erreur</h2><p>Impossible de contacter TikTok.</p>"), 502
+    except (requests.RequestException, ValueError):
+        return page("<h2>Erreur lors de la connexion à TikTok.</h2>"), 502
 
     access_token = token_data.get("access_token")
 
     if token_response.status_code != 200 or not access_token:
         return page(
             "<h2>Connexion impossible</h2>"
-            "<p>La récupération du jeton TikTok a échoué. "
-            "Vérifie la configuration de ton application.</p>"
+            "<p>Vérifie la configuration de ton application TikTok.</p>"
         ), 400
 
-    # Récupérer les informations de base du compte
     try:
         user_response = requests.get(
             USER_INFO_URL,
-            headers={
-                "Authorization": f"Bearer {access_token}"
-            },
-            params={
-                "fields": "open_id,avatar_url,display_name"
-            },
+            headers={"Authorization": f"Bearer {access_token}"},
+            params={"fields": "open_id,avatar_url,display_name"},
             timeout=20
         )
 
         user_data = user_response.json()
 
-    except requests.RequestException:
-        return page("<h2>Erreur</h2><p>Impossible de récupérer ton profil.</p>"), 502
+    except (requests.RequestException, ValueError):
+        return page("<h2>Impossible de récupérer ton profil.</h2>"), 502
 
     if user_response.status_code != 200:
-        return page(
-            "<h2>Erreur de profil</h2>"
-            "<p>TikTok n'a pas autorisé la récupération du profil.</p>"
-        ), 400
+        return page("<h2>Erreur de récupération du profil TikTok.</h2>"), 400
 
-    profile = user_data.get("data", {}).get("user", {})
+    profile_data = user_data.get("data", {}).get("user", {})
 
-    if not profile.get("open_id"):
+    if not profile_data.get("open_id"):
         return page("<h2>Profil TikTok introuvable.</h2>"), 400
 
-    # On garde uniquement les informations publiques du profil en session.
-    # Les jetons ne sont pas enregistrés dans le navigateur.
     session.clear()
     session["tiktok_profile"] = {
-        "open_id": profile.get("open_id"),
-        "display_name": profile.get("display_name", "Utilisateur TikTok"),
-        "avatar_url": profile.get("avatar_url", "")
+        "open_id": profile_data.get("open_id"),
+        "display_name": profile_data.get("display_name", "Utilisateur TikTok"),
+        "avatar_url": profile_data.get("avatar_url", "")
     }
 
     return redirect(url_for("profile"))
